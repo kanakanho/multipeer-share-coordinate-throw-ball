@@ -1,4 +1,4 @@
-# multipeer-share-coordinate-template
+# multipeer-share-coordinate-throw-ball
 
 VisionPro の座標変換を行うテンプレートアプリ
 
@@ -135,7 +135,7 @@ resBothIndexFingerCoordinate{
 # プロジェクト構造
 
 ```
-multipeer-share-coordinate-template
+multipeer-share-coordinate-throw-ball
 ├── AppModel.swift
 ├── ContentView.swift
 ├── DevicePosition.swift
@@ -144,8 +144,8 @@ multipeer-share-coordinate-template
 ├── PeerManager.swift
 ├── ToggleImmersiveSpaceButton.swift
 ├── TransformationMatrixPreparationView.swift
-├── multipeer-share-coordinate-template.entitlements
-└── multipeer_share_coordinate_templateApp.swift
+├── multipeer-share-coordinate-throw-ball.entitlements
+└── multipeer_share_coordinate_throw_ballApp.swift
 ```
 
 ## `AppModel.swift`

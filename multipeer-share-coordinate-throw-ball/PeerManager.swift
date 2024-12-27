@@ -1,6 +1,6 @@
 //
 //  PeerManager.swift
-//  multipeer-share-coordinate-template
+//  multipeer-share-coordinate-throw-ball
 //
 //  Created by blueken on 2024/12/02.
 //

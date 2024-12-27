@@ -9,6 +9,8 @@
 	</array>
 	<key>NSHandsTrackingUsageDescription</key>
 	<string></string>
+	<key>NSWorldSensingUsageDescription</key>
+	<string></string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationPreferredDefaultSceneSessionRole</key>
