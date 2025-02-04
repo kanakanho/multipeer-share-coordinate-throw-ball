@@ -34,6 +34,31 @@
 			);
 			target = EB6C0CAC2D1514BC00DB17DE /* multipeer-share-coordinate-throw-ball */;
 		};
+		EBD0D1C82D4128E000747472 /* Exceptions for "multipeer-share-coordinate-throw-ball" folder in "multipeer-share-coordinate-throw-ballTests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				AppModel.swift,
+				ContentView.swift,
+				Extension.swift,
+				ImmersiveView.swift,
+				ImmersiveViewModel.swift,
+				multipeer_share_coordinate_throw_ballApp.swift,
+				PeerManager.swift,
+				StructFingerCoordinates.swift,
+				ToggleImmersiveSpaceButton.swift,
+				TransformationMatrixPreparation/BothIndexFingerCoordinateClientView.swift,
+				TransformationMatrixPreparation/BothIndexFingerCoordinateHostView.swift,
+				TransformationMatrixPreparation/ConfirmView.swift,
+				TransformationMatrixPreparation/InitialView.swift,
+				TransformationMatrixPreparation/RightIndexFingerCoordinatesClientView.swift,
+				TransformationMatrixPreparation/RightIndexFingerCoordinatesHostView.swift,
+				TransformationMatrixPreparation/SearchingPeerView.swift,
+				TransformationMatrixPreparation/SelectingPeerClientView.swift,
+				TransformationMatrixPreparation/SelectingPeerHostView.swift,
+				TransformationMatrixPreparationView.swift,
+			);
+			target = EB6C0CC72D1514BD00DB17DE /* multipeer-share-coordinate-throw-ballTests */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -41,6 +66,7 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				EB6C0CCE2D1514BD00DB17DE /* Exceptions for "multipeer-share-coordinate-throw-ball" folder in "multipeer-share-coordinate-throw-ball" target */,
+				EBD0D1C82D4128E000747472 /* Exceptions for "multipeer-share-coordinate-throw-ball" folder in "multipeer-share-coordinate-throw-ballTests" target */,
 			);
 			path = "multipeer-share-coordinate-throw-ball";
 			sourceTree = "<group>";
@@ -242,8 +268,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "$(TARGET_NAME)/Info.plist";
-				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "";
-				INFOPLIST_KEY_NSNetworkVolumesUsageDescription = "";
+				INFOPLIST_KEY_CFBundleDisplayName = "";
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -271,8 +297,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "$(TARGET_NAME)/Info.plist";
-				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "";
-				INFOPLIST_KEY_NSNetworkVolumesUsageDescription = "";
+				INFOPLIST_KEY_CFBundleDisplayName = "";
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

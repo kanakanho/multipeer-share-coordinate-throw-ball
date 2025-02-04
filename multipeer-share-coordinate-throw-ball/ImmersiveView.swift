@@ -11,59 +11,102 @@ import RealityKitContent
 
 struct ImmersiveView: View {
     @ObservedObject var peerManager : PeerManager
-    
-    let devicePosition = DevicePosition()
-    
+
     @State var latestRightIndexFingerCoordinates: simd_float4x4 = .init()
     @State var latestLeftIndexFingerCoordinates: simd_float4x4 = .init()
     
-    var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
-    
+    var timer = Timer.publish(every: 0.01, on: .main, in: .common).autoconnect()
+
+    @Environment(ImmersiveViewModel.self) var model
+    @Environment(\.dismissImmersiveSpace) var dismissImmersiveSpace
+    @Environment(\.openWindow) var openWindow
+
     var body: some View {
         RealityView { content in
-            // Add the initial RealityKit content
-            if let immersiveContentEntity = try? await Entity(named: "Immersive", in: realityKitContentBundle) {
-                content.add(immersiveContentEntity)
-                
-                // Put skybox here.  See example in World project available at
-                // https://developer.apple.com/
+            content.add(model.setupContentEntity())
+        }
+        .task {
+            do {
+                if model.dataProvidersAreSupported && model.isReadyToRun {
+                    try await model.session.run([model.sceneReconstruction, model.handTracking])
+                } else {
+                    await dismissImmersiveSpace()
+                }
+            } catch {
+                print("Failed to start session: \(error)")
+                await dismissImmersiveSpace()
+                openWindow(id: "error")
             }
         }
-        .onChange(of: devicePosition.latestRightIndexFingerCoordinates) {
+        .task {
+            await model.processHandUpdates()
+        }
+        .task(priority: .low) {
+            await model.processReconstructionUpdates()
+        }
+        .task {
+            await model.monitorSessionEvents()
+        }
+        .onChange(of: model.errorState) {
+            openWindow(id: "error")
+        }
+        .onChange(of: model.latestRightIndexFingerCoordinates) {
             if (!peerManager.isUpdatePeerManagerRightIndexFingerCoordinates){
                 return
             }
-            self.latestRightIndexFingerCoordinates = devicePosition.latestRightIndexFingerCoordinates
-            peerManager.myRightIndexFingerCoordinates = RightIndexFingerCoordinates(unixTime: Int(Date().timeIntervalSince1970), rightIndexFingerCoordinates: convertToNestedArray(matrix: latestRightIndexFingerCoordinates))
-            peerManager.myBothIndexFingerCoordinate = BothIndexFingerCoordinate(unixTime: Int(Date().timeIntervalSince1970), indexFingerCoordinate: IndexFingerCoordinate(left: convertToNestedArray(matrix: latestLeftIndexFingerCoordinates), right: convertToNestedArray(matrix: latestRightIndexFingerCoordinates)))
-            
+            latestRightIndexFingerCoordinates = model.latestRightIndexFingerCoordinates
+            peerManager.myRightIndexFingerCoordinates = RightIndexFingerCoordinates(unixTime: Int(Date().timeIntervalSince1970), rightIndexFingerCoordinates:  latestRightIndexFingerCoordinates)
+            peerManager.myBothIndexFingerCoordinate = BothIndexFingerCoordinate(unixTime: Int(Date().timeIntervalSince1970), indexFingerCoordinate: IndexFingerCoordinate(left:  latestLeftIndexFingerCoordinates, right:  latestRightIndexFingerCoordinates))
         }
-        .onChange(of: devicePosition.latestLeftIndexFingerCoordinates) {
+        .onChange(of: model.latestLeftIndexFingerCoordinates) {
             if (!peerManager.isUpdatePeerManagerBothIndexFingerCoordinate){
                 return
             }
-            self.latestLeftIndexFingerCoordinates = devicePosition.latestLeftIndexFingerCoordinates
+            latestLeftIndexFingerCoordinates = model.latestLeftIndexFingerCoordinates
             
-            peerManager.myBothIndexFingerCoordinate = BothIndexFingerCoordinate(unixTime: Int(Date().timeIntervalSince1970), indexFingerCoordinate: IndexFingerCoordinate(left: convertToNestedArray(matrix: latestLeftIndexFingerCoordinates), right: convertToNestedArray(matrix: latestRightIndexFingerCoordinates)))
+            peerManager.myBothIndexFingerCoordinate = BothIndexFingerCoordinate(unixTime: Int(Date().timeIntervalSince1970), indexFingerCoordinate: IndexFingerCoordinate(left: latestLeftIndexFingerCoordinates, right:  latestRightIndexFingerCoordinates))
+        }
+        .onChange(of: peerManager.receivedMessage) {
+            if (peerManager.receivedMessage.hasPrefix("matrix:")){
+                let receivedMessage = peerManager.receivedMessage.replacingOccurrences(of: "matrix:", with: "")
+                receiveMatrix(message: receivedMessage)
+            }
+        }
+        .onChange(of: peerManager.transformationMatrixPreparationState) {
+            if (peerManager.transformationMatrixPreparationState == .prepared) {
+                if !peerManager.isHost {
+                    model.entitiyOperationLock = true
+                }
+                model.initBall()
+            }
         }
         .onReceive(timer) { _ in
-            if devicePosition.handTrackingProvider.state != .running {
-                Task {
-                    await devicePosition.run()
-                }
+            if !peerManager.isHost { return }
+            if (peerManager.transformationMatrixPreparationState == .confirm) {
+                sendMatrix()
             }
-            print(convertToNestedArray(matrix: devicePosition.latestLeftIndexFingerCoordinates))
-            print(convertToNestedArray(matrix: latestRightIndexFingerCoordinates))
         }
     }
     
-    private func convertToNestedArray(matrix: simd_float4x4) -> [[Float]] {
-        return [
-            [matrix.columns.0.x, matrix.columns.0.y, matrix.columns.0.z, matrix.columns.0.w],
-            [matrix.columns.1.x, matrix.columns.1.y, matrix.columns.1.z, matrix.columns.1.w],
-            [matrix.columns.2.x, matrix.columns.2.y, matrix.columns.2.z, matrix.columns.2.w],
-            [matrix.columns.3.x, matrix.columns.3.y, matrix.columns.3.z, matrix.columns.3.w]
-        ]
+    func sendMatrix() {
+        model.contentEntity.children.forEach { entity in
+            let clientTransformMatrix =  entity.transform.matrix * peerManager.transformationMatrix
+            let floatList: [Float] = clientTransformMatrix.floatList
+            let floatListStr = floatList.map { String($0) }
+            peerManager.sendMessage("matrix:\(entity.name),\(floatListStr)")
+        }
+    }
+    
+    func receiveMatrix(message: String){
+        let matrixArray = message.components(separatedBy: ",")
+        let entityName = matrixArray[0]
+        guard let entityMatrix = simd_float4x4(floatListStr: Array(matrixArray[1...])) else {
+            print("Failed to create matrix from string list")
+            return
+        }
+        DispatchQueue.main.async {
+            model.contentEntity.children.first(where: { $0.name == entityName })?.transform.matrix = entityMatrix
+        }
     }
 }
 

@@ -6,6 +6,7 @@
 //
 
 import MultipeerConnectivity
+import ARKit
 
 enum TransformationMatrixPreparationState {
     case initial
@@ -16,6 +17,7 @@ enum TransformationMatrixPreparationState {
     case rightIndexFingerCoordinatesClient
     case bothIndexFingerCoordinateHost
     case bothIndexFingerCoordinateClient
+    case confirm
     case prepared
 }
 
@@ -25,39 +27,17 @@ enum MyIndexFingerTrackingState {
     case myBothIndexFingerCoordinate
 }
 
-/*
- [[Float]]の中身
- [matrix.columns.0.x, matrix.columns.0.y, matrix.columns.0.z, matrix.columns.0.w],
- [matrix.columns.1.x, matrix.columns.1.y, matrix.columns.1.z, matrix.columns.1.w],
- [matrix.columns.2.x, matrix.columns.2.y, matrix.columns.2.z, matrix.columns.2.w],
- [matrix.columns.3.x, matrix.columns.3.y, matrix.columns.3.z, matrix.columns.3.w]
- */
-
-struct RightIndexFingerCoordinates:Codable {
-    var unixTime: Int
-    var rightIndexFingerCoordinates: [[Float]]
-}
-
-struct IndexFingerCoordinate:Codable {
-    var left: [[Float]]
-    var right: [[Float]]
-}
-
-struct BothIndexFingerCoordinate:Codable {
-    var unixTime: Int
-    var indexFingerCoordinate: IndexFingerCoordinate
-}
-
 class PeerManager: NSObject, ObservableObject {
     @Published var transformationMatrixPreparationState: TransformationMatrixPreparationState = .initial
+    var transformationMatrix:simd_float4x4 = .init()
     
-    var rightIndexFingerCoordinates: RightIndexFingerCoordinates = RightIndexFingerCoordinates(unixTime: 0, rightIndexFingerCoordinates: [])
+    var rightIndexFingerCoordinates: RightIndexFingerCoordinates = RightIndexFingerCoordinates(unixTime: 0, rightIndexFingerCoordinates: .init())
     
-    var bothIndexFingerCoordinate: BothIndexFingerCoordinate = BothIndexFingerCoordinate(unixTime: 0, indexFingerCoordinate: IndexFingerCoordinate(left: [], right: []))
+    var bothIndexFingerCoordinate: BothIndexFingerCoordinate = BothIndexFingerCoordinate(unixTime: 0, indexFingerCoordinate: IndexFingerCoordinate(left: .init(), right: .init()))
     
-    var myRightIndexFingerCoordinates: RightIndexFingerCoordinates = RightIndexFingerCoordinates(unixTime: 0, rightIndexFingerCoordinates: [])
+    var myRightIndexFingerCoordinates: RightIndexFingerCoordinates = RightIndexFingerCoordinates(unixTime: 0, rightIndexFingerCoordinates: .init())
     
-    var myBothIndexFingerCoordinate: BothIndexFingerCoordinate = BothIndexFingerCoordinate(unixTime: 0, indexFingerCoordinate: IndexFingerCoordinate(left: [], right: []))
+    var myBothIndexFingerCoordinate: BothIndexFingerCoordinate = BothIndexFingerCoordinate(unixTime: 0, indexFingerCoordinate: IndexFingerCoordinate(left: .init(), right: .init()))
     
     @Published var isUpdatePeerManagerRightIndexFingerCoordinates: Bool = true
     @Published var isUpdatePeerManagerBothIndexFingerCoordinate: Bool = true
@@ -65,7 +45,7 @@ class PeerManager: NSObject, ObservableObject {
     @Published var receivedMessage: String = ""
     
     @Published var sendMessagePeerList: [MCPeerID] = []
-    @Published var isHost: Bool!
+    @Published var isHost: Bool = false
     
     private let serviceType = "multipeer-p2p"
     @Published var peerID: MCPeerID!
@@ -131,6 +111,24 @@ class PeerManager: NSObject, ObservableObject {
     
     func decisionHost(isHost: Bool) {
         self.isHost = isHost
+    }
+    
+    func simd_float4x4ToPositionMatrix(matrixs: [simd_float4x4]) -> simd_float4x4 {
+        return simd_float4x4([
+            simd_float4(matrixs[0].position, 1),
+            simd_float4(matrixs[1].position, 1),
+            simd_float4(matrixs[2].position, 1),
+            simd_float4(1, 1, 1, 1)
+        ])
+    }
+    
+    func calculateTransformationMatrix() {
+        let hostMatrix = simd_float4x4ToPositionMatrix(matrixs: [myRightIndexFingerCoordinates.rightIndexFingerCoordinates, myBothIndexFingerCoordinate.indexFingerCoordinate.left, myBothIndexFingerCoordinate.indexFingerCoordinate.right])
+        
+        let clientMatrix = simd_float4x4ToPositionMatrix(matrixs: [rightIndexFingerCoordinates.rightIndexFingerCoordinates, bothIndexFingerCoordinate.indexFingerCoordinate.left, bothIndexFingerCoordinate.indexFingerCoordinate.right])
+        
+        let hostMatrixT = hostMatrix.transpose
+        transformationMatrix = (hostMatrix * hostMatrix).inverse * hostMatrixT * clientMatrix
     }
 }
 

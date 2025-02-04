@@ -13,6 +13,8 @@ struct multipeer_share_coordinate_throw_ballApp: App {
     @State private var appModel = AppModel()
     @StateObject private var peerManager = PeerManager()
     
+    @State private var immersiveViewModel = ImmersiveViewModel()
+    
     var body: some Scene {
         WindowGroup {
             ContentView(peerManager:peerManager)
@@ -21,6 +23,7 @@ struct multipeer_share_coordinate_throw_ballApp: App {
         
         ImmersiveSpace(id: appModel.immersiveSpaceID) {
             ImmersiveView(peerManager:peerManager)
+                .environment(immersiveViewModel)
                 .onAppear {
                     appModel.immersiveSpaceState = .open
                 }

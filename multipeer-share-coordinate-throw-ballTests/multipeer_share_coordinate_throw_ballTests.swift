@@ -9,9 +9,8 @@ import Testing
 @testable import multipeer_share_coordinate_throw_ball
 
 struct multipeer_share_coordinate_throw_ballTests {
-
     @Test func example() async throws {
-        // Write your test here and use APIs like `#expect(...)` to check expected conditions.
+        let test = "test"
+        #expect(test == "test")
     }
-
 }
