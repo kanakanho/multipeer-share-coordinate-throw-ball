@@ -38,6 +38,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				AppModel.swift,
+				calcAffineMatrix.swift,
 				ContentView.swift,
 				Extension.swift,
 				ImmersiveView.swift,

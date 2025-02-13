@@ -113,22 +113,27 @@ class PeerManager: NSObject, ObservableObject {
         self.isHost = isHost
     }
     
-    func simd_float4x4ToPositionMatrix(matrixs: [simd_float4x4]) -> simd_float4x4 {
-        return simd_float4x4([
-            simd_float4(matrixs[0].position, 1),
-            simd_float4(matrixs[1].position, 1),
-            simd_float4(matrixs[2].position, 1),
-            simd_float4(1, 1, 1, 1)
-        ])
+    func calcAffineMatrixArgumentList(_ A: simd_float4x4, _ B: simd_float4x4, _ C: simd_float4x4) -> [[[Double]]] {
+        let argumentList: [[[Double]]] = [
+            A.toDoubleList().transpose4x4,
+            B.toDoubleList().transpose4x4,
+            C.toDoubleList().transpose4x4
+        ]
+
+        return argumentList
     }
     
     func calculateTransformationMatrix() {
-        let hostMatrix = simd_float4x4ToPositionMatrix(matrixs: [myRightIndexFingerCoordinates.rightIndexFingerCoordinates, myBothIndexFingerCoordinate.indexFingerCoordinate.left, myBothIndexFingerCoordinate.indexFingerCoordinate.right])
+        let hostMatrix = calcAffineMatrixArgumentList(myRightIndexFingerCoordinates.rightIndexFingerCoordinates, myBothIndexFingerCoordinate.indexFingerCoordinate.left, myBothIndexFingerCoordinate.indexFingerCoordinate.right)
         
-        let clientMatrix = simd_float4x4ToPositionMatrix(matrixs: [rightIndexFingerCoordinates.rightIndexFingerCoordinates, bothIndexFingerCoordinate.indexFingerCoordinate.left, bothIndexFingerCoordinate.indexFingerCoordinate.right])
+        let clientMatrix = calcAffineMatrixArgumentList(rightIndexFingerCoordinates.rightIndexFingerCoordinates, bothIndexFingerCoordinate.indexFingerCoordinate.left, bothIndexFingerCoordinate.indexFingerCoordinate.right)
         
-        let hostMatrixT = hostMatrix.transpose
-        transformationMatrix = (hostMatrix * hostMatrix).inverse * hostMatrixT * clientMatrix
+        print("hostMatrix")
+        print(hostMatrix)
+        print("clientMatrix")
+        print(clientMatrix)
+        
+        transformationMatrix = calcAffineMatrix(hostMatrix,clientMatrix).tosimd_float4x4()
     }
 }
 

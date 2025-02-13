@@ -82,7 +82,7 @@ struct BothIndexFingerCoordinateHostView: View {
     }
     
     func receiveReceivedSuccessBothIndexFingerCoordinate() {
-//        peerManager.calculateTransformationMatrix()
+        peerManager.calculateTransformationMatrix()
         print(peerManager.transformationMatrix)
         peerManager.transformationMatrixPreparationState = .confirm
     }
