@@ -51,12 +51,19 @@ struct ImmersiveView: View {
             openWindow(id: "error")
         }
         .onChange(of: model.latestRightIndexFingerCoordinates) {
+            if (!peerManager.isUpdatePeerManagerBothIndexFingerCoordinate){
+                return
+            }
+            
+            latestRightIndexFingerCoordinates = model.latestRightIndexFingerCoordinates
+            
+            peerManager.myBothIndexFingerCoordinate = BothIndexFingerCoordinate(unixTime: Int(Date().timeIntervalSince1970), indexFingerCoordinate: IndexFingerCoordinate(left:  latestLeftIndexFingerCoordinates, right:  latestRightIndexFingerCoordinates))
+            
             if (!peerManager.isUpdatePeerManagerRightIndexFingerCoordinates){
                 return
             }
-            latestRightIndexFingerCoordinates = model.latestRightIndexFingerCoordinates
+            
             peerManager.myRightIndexFingerCoordinates = RightIndexFingerCoordinates(unixTime: Int(Date().timeIntervalSince1970), rightIndexFingerCoordinates:  latestRightIndexFingerCoordinates)
-            peerManager.myBothIndexFingerCoordinate = BothIndexFingerCoordinate(unixTime: Int(Date().timeIntervalSince1970), indexFingerCoordinate: IndexFingerCoordinate(left:  latestLeftIndexFingerCoordinates, right:  latestRightIndexFingerCoordinates))
         }
         .onChange(of: model.latestLeftIndexFingerCoordinates) {
             if (!peerManager.isUpdatePeerManagerBothIndexFingerCoordinate){
